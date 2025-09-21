@@ -9,12 +9,27 @@
 import subprocess
 import sys
 import os
+import locale
 from datetime import datetime
 
+# 获取系统默认编码
+system_encoding = locale.getpreferredencoding() or 'utf-8'
+# Git可执行文件的正确安装路径，使用原始字符串避免反斜杠转义问题
+git_path = r'D:\develop_tools\Git\cmd\git.exe'
+
 def run_command(command, check=True):
-    """执行命令并返回结果"""
+    """执行命令并返回结果，使用系统默认编码。如果是git命令，使用完整路径。"""
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding='utf-8')
+        # 如果是git命令，使用完整路径
+        if command.startswith('git '):
+            command_parts = command.split(' ')
+            command_parts[0] = git_path
+            command = ' '.join(command_parts)
+            # 为包含空格的路径添加引号
+            if ' ' in git_path:
+                command = f'"{git_path}"' + command[len(git_path):]
+        
+        result = subprocess.run(command, shell=True, capture_output=True, text=True, encoding=system_encoding)
         if check and result.returncode != 0:
             print(f"❌ 命令执行失败: {command}")
             print(f"错误信息: {result.stderr}")
